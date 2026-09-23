@@ -72,4 +72,4 @@ def render(data, output):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('input');p.add_argument('output')
     args=p.parse_args()
-    print(render(json.loads(Path(args.input).read_text()),args.output))
+    print(render(json.loads(Path(args.input).read_text(encoding='utf-8')),args.output))

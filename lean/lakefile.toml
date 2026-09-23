@@ -1,0 +1,6 @@
+name = "analise"
+version = "0.1.0"
+defaultTargets = ["Analise"]
+
+[[lean_lib]]
+name = "Analise"

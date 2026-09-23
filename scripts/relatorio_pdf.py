@@ -44,7 +44,7 @@ def page(canvas,doc):
  canvas.drawString(42,25,'Relatório independente • Premissas e limitações explicitadas no texto')
  canvas.drawRightString(553,25,str(doc.page))
 
-lines=source.read_text().splitlines();story=[];i=0
+lines=source.read_text(encoding='utf-8').splitlines();story=[];i=0
 while i<len(lines):
  line=lines[i].strip()
  if not line: i+=1;continue
