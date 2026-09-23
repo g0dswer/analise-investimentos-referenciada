@@ -53,18 +53,24 @@ def nonnegative(value):
 
 def terminal_check(data, last_flow, growth):
     """Gordon usa CF_N(1+g); o terminal por RONIC usa NOPAT_{N+1}(1 − g/RONIC).
-    Os dois só coincidem se esses fluxos forem iguais (lean/Analise/TerminalRoic.lean)."""
+    A diferença entre os terminais é NOPAT × (exigido − implícito)/(r − g), em que
+    implícito e exigido são taxas de reinvestimento (lean/Analise/TerminalRoic.lean)."""
+    if not any(k in data for k in ('terminal_nopat', 'ronic', 'terminal_tolerance')):
+        return dict(status='não verificado')
     if 'terminal_nopat' not in data or 'ronic' not in data:
         raise ValueError('Informe terminal_nopat e ronic juntos')
     nopat = positive(data['terminal_nopat'])
     ronic = positive(data['ronic'])
-    tolerance = nonnegative(data.get('terminal_tolerance', Decimal('0.0001')))
+    # Diferença máxima entre as taxas de reinvestimento: 0.001 = 0,1 ponto percentual.
+    tolerance = nonnegative(data.get('terminal_tolerance', Decimal('0.001')))
     gordon_flow = last_flow * (1 + growth)
-    driver_flow = nopat * (1 - growth / ronic)
-    check = dict(gordon_next_flow=gordon_flow, value_driver_next_flow=driver_flow,
-                 implied_reinvestment_rate=1 - gordon_flow / nopat,
-                 required_reinvestment_rate=growth / ronic)
-    if abs(gordon_flow - driver_flow) > tolerance * abs(driver_flow):
+    implied = 1 - gordon_flow / nopat
+    required = growth / ronic
+    check = dict(status='coerente', gordon_next_flow=gordon_flow,
+                 value_driver_next_flow=nopat * (1 - required),
+                 implied_reinvestment_rate=implied, required_reinvestment_rate=required,
+                 reinvestment_gap=required - implied)
+    if abs(required - implied) > tolerance:
         raise ValueError(
             'Terminal incoerente: CF_N(1+g) = {} e NOPAT(1−g/RONIC) = {}; reinvestimento '
             'implícito {} versus exigido {}. Ajustar o último fluxo ou usar terminal_roic.'.format(
@@ -102,8 +108,9 @@ def _calculate(data):
             raise ValueError('Forneça taxa constante ou fatores explícitos')
         terminal = nonnegative(data.get('terminal_value', 0))
         check = None
-        if ('terminal_nopat' in data or 'ronic' in data) and 'terminal_growth' not in data:
-            raise ValueError('terminal_nopat e ronic verificam terminal_growth; '
+        if (any(k in data for k in ('terminal_nopat', 'ronic', 'terminal_tolerance'))
+                and 'terminal_growth' not in data):
+            raise ValueError('terminal_nopat, ronic e terminal_tolerance verificam terminal_growth; '
                              'para valor terminal explícito, usar terminal_roic em acoes.py')
         if 'terminal_growth' in data:
             if 'terminal_value' in data:
@@ -114,8 +121,7 @@ def _calculate(data):
             if growth <= -1 or rate <= growth or flows[-1] < 0:
                 raise ValueError('Perpetuidade exige -1 < g < taxa e fluxo final não negativo')
             terminal = flows[-1] * (1 + growth) / (rate - growth)
-            if 'terminal_nopat' in data or 'ronic' in data:
-                check = terminal_check(data, flows[-1], growth)
+            check = terminal_check(data, flows[-1], growth)
         pv_flows = sum((flow / factor for flow, factor in zip(flows, factors)), Decimal(0))
         pv_terminal = terminal / factors[-1]
         result = dict(pv_cashflows=pv_flows, terminal_value=terminal, pv_terminal=pv_terminal,

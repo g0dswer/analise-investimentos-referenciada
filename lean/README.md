@@ -23,6 +23,7 @@ acrescente `#print axioms Analise.Dcf.converge` (ou outro nome) a um arquivo que
 | `Dcf` | Com `−1 < g < r` (as guardas do script), `0 < (1+g)/(1+r) < 1`; soma parcial `S_n = TV(1 − qⁿ)`; cauda `TV·qⁿ`; convergência para `CF_N(1+g)/(r−g)` | `terminal_growth` |
 | `TerminalRoic` | `TV − NOPAT/r = NOPAT·g·(RONIC − r) / (RONIC·r·(r − g))`: crescimento cria valor se `RONIC > r`, é neutro se `RONIC = r` e destrói se `RONIC < r` | `acoes.py`, modo `terminal_roic` |
 | `TerminalRoic` | `g ≤ RONIC` ⇒ fluxo terminal não negativo; Gordon do modo `dcf` coincide com este terminal **somente** quando `CF_N(1+g) = NOPAT_{N+1}(1 − g/RONIC)` | Verificada em `dcf` com `terminal_nopat` e `ronic` |
+| `TerminalRoic` | Diferença entre os terminais = `NOPAT × (reinvestimento exigido − implícito) / (r − g)` | Base da tolerância `terminal_tolerance` |
 | `Ponte` | Perpetuidade sem crescimento com dívida perpétua: `FCFF/WACC − D = FCFE/Ke`; `FCFF/Ke − D` subavalia o acionista quando `kd(1−t) < Ke` e `D > 0` | "Não descontar FCFF por Ke" |
 | `Fcff` | `examples/fcff.json` = 68; sem escudo fiscal, NOPAT de prejuízo ≤ NOPAT com escudo; variações de capital de giro somam `saldo final − saldo inicial` | `acoes.py`, modo `fcff` |
 | `Metricas` | `1 − P/V = u/(1+u)` com `u = V/P − 1`; Bernoulli; DY composto ≥ `12·dy`; passo de reinvestimento autofinanciado | `metrics`, `reinvested_return` |

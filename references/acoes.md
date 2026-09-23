@@ -26,7 +26,7 @@ Descrever produtos, clientes, geografia, capacidade, preços, volumes, contratos
 
 Usar uma linha por período: receita, EBIT, imposto operacional, NOPAT, D&A, CAPEX, variação de capital de giro e FCFF. Aumento do saldo de capital de giro consome caixa; não subtrair o saldo inteiro a cada ano.
 
-O terminal exige taxa, crescimento, reinvestimento e ano coerentes. No modelo estável, reinvestimento = g/RONIC, em que RONIC é o retorno sobre o capital novo. Conferir convenções reais e nominais antes de usar a identidade. O fluxo terminal é o do primeiro período posterior à projeção, não um resultado intermediário conveniente.
+O terminal exige taxa, crescimento, reinvestimento e ano coerentes. No modelo estável, reinvestimento = g/RONIC, em que RONIC é o retorno sobre o capital novo. Ao descontar FCFF com crescimento terminal, informar `terminal_nopat` e `ronic` ao helper ou calcular o terminal com `terminal_roic`; `terminal_check.status` igual a `não verificado` indica que a coerência não foi testada. Conferir convenções reais e nominais antes de usar a identidade. O fluxo terminal é o do primeiro período posterior à projeção, não um resultado intermediário conveniente.
 
 Após descontar FCFF, reconciliar caixa, dívida, ativos não operacionais, minoritários e quantidade real de ações. Tratar classes com direitos distintos separadamente; uma unit é uma composição de valores econômicos, não uma nova base para dividir todo o valor da empresa.
 

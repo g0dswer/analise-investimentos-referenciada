@@ -85,4 +85,16 @@ theorem coincide_com_gordon {cf nopat r g ronic : Rat} (hg : g < r) :
     rwa [Rat.div_mul_cancel hrg, Rat.div_mul_cancel hrg] at this
   · intro h; rw [h]
 
+/-- A diferença entre o Gordon do modo `dcf` e este terminal é
+`NOPAT × (exigido − implícito) / (r − g)`, com reinvestimento implícito
+`1 − CF_N(1+g)/NOPAT` e exigido `g/RONIC`. O modo `dcf` limita `exigido − implícito`
+por `terminal_tolerance`; o erro no valor terminal fica, assim, proporcional a
+`NOPAT/(r − g)` e não depende do nível de reinvestimento. -/
+theorem diferenca_entre_terminais {cf nopat r g ronic : Rat} (hn : nopat ≠ 0) (hg : g < r) :
+    Analise.Dcf.gordon cf g r - valorTerminal nopat r g ronic
+      = nopat * (g / ronic - (1 - cf * (1 + g) / nopat)) / (r - g) := by
+  have hrg : r - g ≠ 0 := by grind
+  unfold Analise.Dcf.gordon valorTerminal
+  grind
+
 end Analise.TerminalRoic

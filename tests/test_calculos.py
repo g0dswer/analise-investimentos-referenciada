@@ -105,9 +105,27 @@ class ValidationTest(unittest.TestCase):
                     terminal_nopat=103, ronic=Decimal('0.15'))
         # 80 × 1,03 = 103 × (1 − 0,03/0,15) = 82,4
         ok = calculos.calculate(dict(base, cashflows=[60, 80]))
-        self.assertEqual(ok['terminal_check']['required_reinvestment_rate'], Decimal('0.2'))
+        self.assertEqual(ok['terminal_check']['status'], 'coerente')
+        self.assertEqual(ok['terminal_check']['reinvestment_gap'], 0)
+        # Fluxo arredondado: diferença de 0,05 p.p. no reinvestimento, dentro de 0,1 p.p.
+        near = calculos.calculate(dict(base, cashflows=[60, Decimal('80.05')]))
+        self.assertEqual(near['terminal_check']['reinvestment_gap'], Decimal('0.0005'))
         with self.assertRaises(ValueError):
-            calculos.calculate(dict(base, cashflows=[60, 70]))
+            calculos.calculate(dict(base, cashflows=[60, Decimal('80.05')],
+                                    terminal_tolerance=Decimal('0.0001')))
+        with self.assertRaises(ValueError):  # 27,9% implícito contra 20% exigido
+            calculos.calculate(dict(base, cashflows=[60, 70], terminal_nopat=100))
+
+    def test_terminal_sem_verificacao_fica_marcado(self):
+        result = calculos.calculate(dict(mode='dcf', cashflows=[60, 80],
+                                         discount_rate=Decimal('0.10'),
+                                         terminal_growth=Decimal('0.03')))
+        self.assertEqual(result['terminal_check'], dict(status='não verificado'))
+        with self.assertRaises(ValueError):
+            calculos.calculate(dict(mode='dcf', cashflows=[60, 80],
+                                    discount_rate=Decimal('0.10'),
+                                    terminal_growth=Decimal('0.03'),
+                                    terminal_tolerance=Decimal('0.01')))
 
 
 if __name__ == '__main__':
