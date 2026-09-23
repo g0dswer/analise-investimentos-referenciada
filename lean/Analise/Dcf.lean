@@ -22,15 +22,20 @@ def vp (r : Rat) (fluxos : List Rat) : Rat := vpDesde r 0 fluxos
 /-- `examples/dcf.json`: fluxos 24, 28 e 32 a 10% com terminal nulo. -/
 theorem exemplo_dcf : vp (1 / 10) [24, 28, 32] = 91840 / 1331 := by decide +kernel
 
-/-- Valor impresso pelo script: `69.00075131480090157776108190` (28 dígitos). -/
-def valorImpresso : Rat := 6900075131480090157776108190 / 10 ^ 26
+/-- Valor impresso pelo script: `69.00075131480090157776108189` (28 dígitos). -/
+def valorImpresso : Rat := 6900075131480090157776108189 / 10 ^ 26
 
-/-- O último dígito impresso não é exato (arredondamentos intermediários de `Decimal`),
-mas o erro é inferior a `10⁻²⁶`: irrelevante economicamente, relevante apenas para não
-tratar os 28 dígitos como significativos. -/
-theorem impresso_aproxima_exato :
-    valorImpresso ≠ 91840 / 1331 ∧ 0 < valorImpresso - 91840 / 1331
-      ∧ valorImpresso - 91840 / 1331 < 1 / 10 ^ 26 := by
+/-- O valor impresso é o arredondamento correto do valor exato a 28 dígitos: o erro
+não passa de meia unidade da última casa, `5 × 10⁻²⁷`. -/
+theorem impresso_arredondado_corretamente :
+    91840 / 1331 - valorImpresso < 5 / 10 ^ 27
+      ∧ valorImpresso - 91840 / 1331 < 5 / 10 ^ 27 := by
+  decide +kernel
+
+/-- Com 28 dígitos de precisão nas contas intermediárias, o script imprimia `…08190`:
+um dígito acima do arredondamento correto. -/
+theorem impressao_anterior_errava_ultimo_digito :
+    ¬ (6900075131480090157776108190 / 10 ^ 26 - (91840 : Rat) / 1331 < 5 / 10 ^ 27) := by
   decide +kernel
 
 /-! ## Perpetuidade de Gordon -/

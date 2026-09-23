@@ -3,9 +3,14 @@
 from decimal import Decimal, localcontext
 import json, argparse
 from pathlib import Path
-from calculos import dec, positive, nonnegative
+from calculos import PRECISION, dec, flag, positive, nonnegative, serialize
 
 def calculate(data):
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        return _calculate(data)
+
+def _calculate(data):
     mode=data['mode']
     if mode=='fcff':
         rows=[]
@@ -14,7 +19,7 @@ def calculate(data):
             if tax>1: raise ValueError('tax_rate deve estar em [0,1]')
             ebit=dec(row['ebit'])
             # Tax shield for a loss must be explicitly modeled, not automatic.
-            if ebit<0 and not row.get('loss_tax_shield',False): nopat=ebit
+            if ebit<0 and not flag(row,'loss_tax_shield'): nopat=ebit
             else: nopat=ebit*(1-tax)
             flow=nopat+nonnegative(row['da'])-nonnegative(row['capex'])-dec(row['delta_working_capital'])
             rows.append({'period':row['period'],'nopat':nopat,'fcff':flow})
@@ -22,9 +27,12 @@ def calculate(data):
         if len({str(r['period']) for r in rows})!=len(rows): raise ValueError('Período duplicado')
         return {'periods':rows,'unit':data['unit']}
     if mode=='terminal_roic':
-        nopat=nonnegative(data['nopat_next']);r=positive(data['discount_rate']);g=dec(data['growth']);roic=positive(data['roic'])
-        if g<0 or g>=r or g>roic: raise ValueError('Exige 0 <= g < taxa e g <= ROIC; outro regime requer modelo explícito')
-        reinvestment=g/roic
+        # RONIC: retorno sobre o capital novo; `roic` é aceito como nome antigo.
+        if 'ronic' in data and 'roic' in data: raise ValueError('Informe ronic ou o nome antigo roic, não ambos')
+        if 'ronic' not in data and 'roic' not in data: raise ValueError('Informe ronic, o retorno sobre o capital novo')
+        nopat=nonnegative(data['nopat_next']);r=positive(data['discount_rate']);g=dec(data['growth']);ronic=positive(data['ronic'] if 'ronic' in data else data['roic'])
+        if g<0 or g>=r or g>ronic: raise ValueError('Exige 0 <= g < taxa e g <= RONIC; outro regime requer modelo explícito')
+        reinvestment=g/ronic
         fcff=nopat*(1-reinvestment)
         return {'reinvestment_rate':reinvestment,'terminal_fcff':fcff,'terminal_value':fcff/(r-g)}
     if mode=='equity_bridge':
@@ -43,14 +51,15 @@ def calculate(data):
         if 'unit_composition' in data:
             count=positive(data['unit_composition'])
             if count!=count.to_integral_value(): raise ValueError('Composição da unit deve ser inteira')
-            if not data.get('equal_economic_rights',False): raise ValueError('Exige equivalência econômica explícita entre classes; senão avaliar cada classe')
+            if not flag(data,'equal_economic_rights'): raise ValueError('Exige equivalência econômica explícita entre classes; senão avaliar cada classe')
             result['value_per_unit']=result['value_per_share']*count
         return result
     raise ValueError('Modo desconhecido')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('input');args=parser.parse_args()
-    with localcontext() as ctx:
-        ctx.prec=40
-        result=calculate(json.loads(Path(args.input).read_text(),parse_float=Decimal))
-    print(json.dumps(result,default=str,ensure_ascii=False,indent=2))
+    try:
+        result=calculate(json.loads(Path(args.input).read_text(encoding='utf-8'),parse_float=Decimal))
+        print(json.dumps(result,default=serialize,ensure_ascii=False,indent=2))
+    except (ValueError, KeyError, TypeError, ArithmeticError) as exc:
+        parser.exit(2, f'Entradas inválidas: {exc}\n')

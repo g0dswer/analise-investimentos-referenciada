@@ -5,6 +5,27 @@ import json
 from datetime import date
 from decimal import Decimal, Inexact, InvalidOperation, localcontext
 
+# Contas com 40 dígitos significativos; resultados impressos com 28, todos corretos.
+PRECISION = 40
+OUTPUT_DIGITS = 28
+
+
+def serialize(value):
+    """Conversor JSON: Decimal arredondado a OUTPUT_DIGITS, zero sempre como "0"."""
+    if isinstance(value, Decimal):
+        with localcontext() as ctx:
+            ctx.prec = OUTPUT_DIGITS
+            value = +value
+        return '0' if value == 0 else str(value)
+    raise TypeError(f'Tipo não serializável: {type(value).__name__}')
+
+
+def flag(data, key):
+    value = data.get(key, False)
+    if not isinstance(value, bool):
+        raise ValueError(f'{key} deve ser true ou false')
+    return value
+
 
 def dec(value):
     try:
@@ -30,7 +51,36 @@ def nonnegative(value):
     return result
 
 
+def terminal_check(data, last_flow, growth):
+    """Gordon usa CF_N(1+g); o terminal por RONIC usa NOPAT_{N+1}(1 − g/RONIC).
+    Os dois só coincidem se esses fluxos forem iguais (lean/Analise/TerminalRoic.lean)."""
+    if 'terminal_nopat' not in data or 'ronic' not in data:
+        raise ValueError('Informe terminal_nopat e ronic juntos')
+    nopat = positive(data['terminal_nopat'])
+    ronic = positive(data['ronic'])
+    tolerance = nonnegative(data.get('terminal_tolerance', Decimal('0.0001')))
+    gordon_flow = last_flow * (1 + growth)
+    driver_flow = nopat * (1 - growth / ronic)
+    check = dict(gordon_next_flow=gordon_flow, value_driver_next_flow=driver_flow,
+                 implied_reinvestment_rate=1 - gordon_flow / nopat,
+                 required_reinvestment_rate=growth / ronic)
+    if abs(gordon_flow - driver_flow) > tolerance * abs(driver_flow):
+        raise ValueError(
+            'Terminal incoerente: CF_N(1+g) = {} e NOPAT(1−g/RONIC) = {}; reinvestimento '
+            'implícito {} versus exigido {}. Ajustar o último fluxo ou usar terminal_roic.'.format(
+                *(serialize(check[k]) for k in ('gordon_next_flow', 'value_driver_next_flow',
+                                                'implied_reinvestment_rate',
+                                                'required_reinvestment_rate'))))
+    return check
+
+
 def calculate(data):
+    with localcontext() as ctx:
+        ctx.prec = PRECISION
+        return _calculate(data)
+
+
+def _calculate(data):
     mode = data['mode']
     if mode == 'dcf':
         # t=1..N, mesma unidade de tempo para taxa, crescimento e fluxos.
@@ -51,6 +101,10 @@ def calculate(data):
         else:
             raise ValueError('Forneça taxa constante ou fatores explícitos')
         terminal = nonnegative(data.get('terminal_value', 0))
+        check = None
+        if ('terminal_nopat' in data or 'ronic' in data) and 'terminal_growth' not in data:
+            raise ValueError('terminal_nopat e ronic verificam terminal_growth; '
+                             'para valor terminal explícito, usar terminal_roic em acoes.py')
         if 'terminal_growth' in data:
             if 'terminal_value' in data:
                 raise ValueError('Escolha valor terminal ou crescimento terminal')
@@ -60,10 +114,15 @@ def calculate(data):
             if growth <= -1 or rate <= growth or flows[-1] < 0:
                 raise ValueError('Perpetuidade exige -1 < g < taxa e fluxo final não negativo')
             terminal = flows[-1] * (1 + growth) / (rate - growth)
+            if 'terminal_nopat' in data or 'ronic' in data:
+                check = terminal_check(data, flows[-1], growth)
         pv_flows = sum((flow / factor for flow, factor in zip(flows, factors)), Decimal(0))
         pv_terminal = terminal / factors[-1]
-        return dict(pv_cashflows=pv_flows, terminal_value=terminal, pv_terminal=pv_terminal,
-                    present_value=pv_flows + pv_terminal)
+        result = dict(pv_cashflows=pv_flows, terminal_value=terminal, pv_terminal=pv_terminal,
+                      present_value=pv_flows + pv_terminal)
+        if check is not None:
+            result['terminal_check'] = check
+        return result
     if mode == 'cap_rate':
         noi = nonnegative(data['annual_noi'])
         cap = positive(data['cap_rate'])
@@ -151,7 +210,7 @@ def main():
     try:
         with open(args.input, encoding='utf-8') as handle:
             result = calculate(json.load(handle, parse_float=Decimal))
-        print(json.dumps(result, default=str, ensure_ascii=False, indent=2))
+        print(json.dumps(result, default=serialize, ensure_ascii=False, indent=2))
     except (ValueError, KeyError, TypeError, ArithmeticError) as exc:
         parser.exit(2, f'Entradas inválidas: {exc}\n')
 

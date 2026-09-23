@@ -19,7 +19,7 @@ $analise-investimentos-referenciada Analise o ativo solicitado na data-base indi
 ## Recursos
 
 - Roteiros para ações, bancos, seguradoras, concessões e fundos imobiliários.
-- Helpers de FCFF, DCF, terminal com ROIC, ponte por ação/cota, cap rate e métricas.
+- Helpers de FCFF, DCF, terminal com RONIC, ponte por ação/cota, cap rate e métricas.
 - Figuras PNG/SVG e exportação de Markdown simples para PDF.
 - Dados ausentes, cenários próprios e limites de reprodução explicitados.
 

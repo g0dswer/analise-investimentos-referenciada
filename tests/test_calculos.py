@@ -1,13 +1,17 @@
 """Testes dos helpers de cálculo. Executar: python3 -m unittest discover -s tests"""
+import json
 import random
+import subprocess
 import sys
+import tempfile
 import unittest
 from decimal import Decimal
 from fractions import Fraction
 from math import floor
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+SCRIPTS = Path(__file__).resolve().parents[1] / 'scripts'
+sys.path.insert(0, str(SCRIPTS))
 import acoes  # noqa: E402
 import calculos  # noqa: E402
 
@@ -52,12 +56,58 @@ class ExamplesTest(unittest.TestCase):
             delta_working_capital=7)]))
         self.assertEqual(result['periods'][0]['fcff'], 68)
 
-    def test_dcf_exemplo_proximo_do_valor_exato(self):
+    def test_dcf_exemplo_arredondado_corretamente(self):
         result = calculos.calculate(dict(mode='dcf', cashflows=[24, 28, 32],
                                          discount_rate=Decimal('0.10'), terminal_value=0))
-        # Valor exato 91840/1331 (lean/Analise/Dcf.lean).
-        self.assertLess(abs(Fraction(result['present_value']) - Fraction(91840, 1331)),
-                        Fraction(1, 10**25))
+        # Valor exato 91840/1331 = 69,00075131480090157776108189|33… (lean/Analise/Dcf.lean).
+        self.assertEqual(calculos.serialize(result['present_value']),
+                         '69.00075131480090157776108189')
+        self.assertEqual(calculos.serialize(result['pv_terminal']), '0')
+
+
+def run(script, data, tmp):
+    path = Path(tmp) / 'entrada.json'
+    path.write_text(json.dumps(data), encoding='utf-8')
+    return subprocess.run([sys.executable, str(SCRIPTS / script), str(path)],
+                          capture_output=True, text=True)
+
+
+class ValidationTest(unittest.TestCase):
+    def test_acoes_rejeita_sem_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = run('acoes.py', dict(mode='terminal_roic', nopat_next=1,
+                                       discount_rate=0.1, growth=0.2, ronic=0.3), tmp)
+        self.assertEqual(out.returncode, 2)
+        self.assertIn('Entradas inválidas', out.stderr)
+        self.assertNotIn('Traceback', out.stderr)
+
+    def test_flags_exigem_booleano(self):
+        period = dict(period='A', ebit=-10, tax_rate=Decimal('0.3'), da=0, capex=0,
+                      delta_working_capital=0, loss_tax_shield='false')
+        with self.assertRaises(ValueError):
+            acoes.calculate(dict(mode='fcff', unit='u', periods=[period]))
+        with self.assertRaises(ValueError):
+            acoes.calculate(dict(mode='equity_bridge', cashflow_type='fcfe', present_value=10,
+                                 shares=1, money_scale=1, unit_composition=2,
+                                 equal_economic_rights='true'))
+
+    def test_ronic_e_alias_roic(self):
+        base = dict(mode='terminal_roic', nopat_next=100, discount_rate=Decimal('0.10'),
+                    growth=Decimal('0.03'))
+        novo = acoes.calculate(dict(base, ronic=Decimal('0.15')))
+        antigo = acoes.calculate(dict(base, roic=Decimal('0.15')))
+        self.assertEqual(novo, antigo)
+        with self.assertRaises(ValueError):
+            acoes.calculate(dict(base, ronic=Decimal('0.15'), roic=Decimal('0.15')))
+
+    def test_coerencia_gordon_ronic(self):
+        base = dict(mode='dcf', discount_rate=Decimal('0.10'), terminal_growth=Decimal('0.03'),
+                    terminal_nopat=103, ronic=Decimal('0.15'))
+        # 80 × 1,03 = 103 × (1 − 0,03/0,15) = 82,4
+        ok = calculos.calculate(dict(base, cashflows=[60, 80]))
+        self.assertEqual(ok['terminal_check']['required_reinvestment_rate'], Decimal('0.2'))
+        with self.assertRaises(ValueError):
+            calculos.calculate(dict(base, cashflows=[60, 70]))
 
 
 if __name__ == '__main__':
