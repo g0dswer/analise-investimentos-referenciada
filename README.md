@@ -39,6 +39,15 @@ python scripts/calculos.py examples/dcf.json
 python scripts/graficos.py examples/chart.json output/receita
 ```
 
+## Verificação
+
+```bash
+python3 -m unittest discover -s tests
+cd lean && lake build
+```
+
+Os testes conferem os exemplos e as invariantes da conversão. O diretório [lean/](lean/README.md) prova em Lean 4 as identidades algébricas dos helpers e lista o que não é coberto: a correspondência com o Python é manual, e nenhuma prova valida premissas econômicas.
+
 Consulte [SKILL.md](SKILL.md) e [as interfaces de cálculo](references/calculos.md). A skill precisa de documentos e dados adequados a cada análise; ela não inclui integração automática com provedores financeiros nem recomendações prontas.
 
 ## Licença

@@ -11,3 +11,4 @@ output/
 *.xls
 *.csv
 .codebase-memory/
+lean/.lake/
