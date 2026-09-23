@@ -18,7 +18,7 @@ No DCF, `terminal_value` e `terminal_growth` são alternativas. Com crescimento,
 
 O modo `cap_rate` assume zero para ajustes patrimoniais opcionais omitidos. Em análise real, omissão de dívida/caixa não comprova ausência; informar valores confirmados ou interromper a ponte. Não somar cap rate e DCF sobre o mesmo imóvel como duas fontes independentes de valor.
 
-Na conversão, imposto por cota = `max(valor de origem − custo, 0) × alíquota`. O saldo líquido determina cotas teóricas, cotas inteiras e residual pelo valor de destino. É uma convenção simplificada, sem regras automáticas de tributação, compensação, leilão ou custos. Verificar as condições do evento antes de usar. O residual não recebe dividendos como se fosse cota.
+Na conversão, imposto por cota = `max(valor de origem − custo, 0) × alíquota`. O saldo líquido determina cotas teóricas, cotas inteiras e residual pelo valor de destino; cotas inteiras e residual vêm de divisão exata, e entradas que exigiriam arredondamento são rejeitadas. É uma convenção simplificada, sem regras automáticas de tributação, compensação, leilão ou custos. Verificar as condições do evento antes de usar. O residual não recebe dividendos como se fosse cota.
 
 DY anualizado simples e composto são convenções, não previsão. Retorno realizado de 12 meses exige proventos efetivos. No reinvestimento, preços e dividendos devem estar ajustados de forma compatível; não somar dividendos a preços já ajustados por retorno total. O helper não trata aportes, retiradas, impostos ou eventos societários.
 

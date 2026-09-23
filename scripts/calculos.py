@@ -3,7 +3,7 @@
 import argparse
 import json
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_FLOOR
+from decimal import Decimal, Inexact, InvalidOperation, localcontext
 
 
 def dec(value):
@@ -81,13 +81,18 @@ def calculate(data):
         units = positive(data['source_units'])
         if units != units.to_integral_value():
             raise ValueError('Quantidade de cotas deve ser inteira')
-        tax = max(source - basis, Decimal(0)) * tax_rate
-        net = source - tax
+        # Cotas inteiras e residual saem de divisão inteira exata; a razão arredondada
+        # (1/3 → 0,333…3) perderia uma cota. Ver lean/Analise/Conversao.lean.
+        with localcontext() as ctx:
+            ctx.traps[Inexact] = True
+            try:
+                tax = max(source - basis, Decimal(0)) * tax_rate
+                net = source - tax
+                whole, residual = divmod(units * net, target)
+            except Inexact as exc:
+                raise ValueError('Valores exigem arredondamento; reduza as casas decimais') from exc
         ratio = net / target
-        theoretical_units = units * ratio
-        whole = theoretical_units.to_integral_value(rounding=ROUND_FLOOR)
-        # Residual calculado a partir dos valores, sem arredondar a razão.
-        residual = units * net - whole * target
+        theoretical_units = units * net / target
         result = dict(tax_per_unit=tax, net_per_unit=net, conversion_ratio=ratio,
                       theoretical_units=theoretical_units, whole_units=whole,
                       residual_cash_at_target_value=residual)
