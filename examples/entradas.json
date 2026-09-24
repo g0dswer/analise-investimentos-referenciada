@@ -3,10 +3,10 @@
   "data_base": "2026-06-30",
   "escala_demonstracoes": "milhoes",
   "entradas": [
-    {"nome": "preco_acao", "valor": 18.4, "tipo": "preco", "fonte": "Cotação sintética de exemplo", "data": "2026-06-30", "unidade": "R$ por ação", "escala": "unidade", "natureza": "observado"},
-    {"nome": "ebit_ano_1", "valor": 120, "tipo": "demonstracao", "fonte": "Demonstração sintética de exemplo, tabela 1", "data": "2025-12-31", "unidade": "R$", "escala": "milhoes", "natureza": "observado"},
-    {"nome": "capex_ano_1", "valor": 30, "tipo": "demonstracao", "fonte": "Demonstração sintética de exemplo, tabela 3", "data": "2025-12-31", "unidade": "R$", "escala": "milhoes", "natureza": "observado"},
-    {"nome": "acoes_em_circulacao", "valor": 250, "tipo": "quantidade", "fonte": "Formulário sintético de exemplo, item 2", "data": "2026-06-30", "unidade": "ações", "escala": "milhoes", "natureza": "observado"},
+    {"nome": "preco_acao", "valor": 18.4, "tipo": "preco", "fonte": "Cotação sintética de exemplo", "data": "2026-06-30", "publicacao": "2026-06-30", "unidade": "R$ por ação", "escala": "unidade", "natureza": "observado"},
+    {"nome": "ebit_ano_1", "valor": 120, "tipo": "demonstracao", "fonte": "Demonstração sintética de exemplo, tabela 1", "data": "2025-12-31", "publicacao": "2026-03-27", "unidade": "R$", "escala": "milhoes", "natureza": "observado"},
+    {"nome": "capex_ano_1", "valor": 30, "tipo": "demonstracao", "fonte": "Demonstração sintética de exemplo, tabela 3", "data": "2025-12-31", "publicacao": "2026-03-27", "unidade": "R$", "escala": "milhoes", "natureza": "observado"},
+    {"nome": "acoes_em_circulacao", "valor": 250, "tipo": "quantidade", "fonte": "Formulário sintético de exemplo, item 2", "data": "2026-05-31", "publicacao": "2026-06-10", "unidade": "ações", "escala": "milhoes", "natureza": "observado"},
     {"nome": "aliquota_imposto", "valor": 0.25, "tipo": "taxa", "fonte": "Premissa sintética de exemplo", "data": "2026-06-30", "unidade": "fração", "escala": "unidade", "natureza": "premissa"},
     {"nome": "fcff_ano_1", "valor": 68, "tipo": "demonstracao", "fonte": "scripts/acoes.py com examples/fcff.json", "data": "2026-06-30", "unidade": "R$", "escala": "milhoes", "natureza": "calculado"}
   ]

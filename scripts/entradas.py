@@ -101,12 +101,29 @@ def verificar(dados):
             if tipo not in TIPOS:
                 erros.append(f'{rotulo}: tipo deve ser um de {", ".join(TIPOS)}')
 
+        # `data` é o período ou dia a que o valor se refere; a disponibilidade de um
+        # documento é a data de publicação, que pode ser meses depois do período.
+        publicacao = None
+        if natureza in ('observado', 'orientacao'):
+            try:
+                publicacao = data_iso(item.get('publicacao'))
+            except ValueError:
+                erros.append(f'{rotulo}: dado {natureza} exige publicacao no formato AAAA-MM-DD')
+        elif 'publicacao' in item:
+            try:
+                publicacao = data_iso(item['publicacao'])
+            except ValueError:
+                erros.append(f'{rotulo}: publicacao fora do formato AAAA-MM-DD')
+        if natureza == 'observado' and data is not None and publicacao is not None \
+                and publicacao < data:
+            erros.append(f'{rotulo}: publicação em {publicacao}, antes da data observada {data}')
+
         if data is not None and data_base is not None:
             if tipo == 'preco' and data != data_base:
                 alertas.append(f'{rotulo}: preço de {data}, diferente da data-base {data_base}')
-            if natureza in ('observado', 'orientacao') and data > data_base:
-                alertas.append(f'{rotulo}: informação de {data}, posterior à data-base '
-                               f'{data_base}; indisponível em análise histórica')
+        if publicacao is not None and data_base is not None and publicacao > data_base:
+            alertas.append(f'{rotulo}: publicado em {publicacao}, após a data-base '
+                           f'{data_base}; indisponível na data-base')
         if tipo == 'demonstracao' and escala is not None:
             if escala_ref is not None and escala != escala_ref:
                 alertas.append(f'{rotulo}: escala {escala}, diferente das demonstrações '
