@@ -2,7 +2,7 @@
 
 ## Base de dados
 
-Manter uma tabela com indicador, valor, unidade, denominador, período, fonte e classificação. Diferenciar data de publicação, data do preço e período financeiro. Uma tabela extraída pode misturar moedas, escalas ou períodos; conferir seus cabeçalhos visualmente antes de modelar.
+Manter uma tabela com indicador, valor, unidade, denominador, período, fonte e classificação. Para verificação automática, registrar as entradas em JSON como `examples/entradas.json`: `data_base`, `escala_demonstracoes` e uma lista `entradas`, cada uma com `nome`, `valor` (número ou `null`), `fonte`, `data` (AAAA-MM-DD), `unidade`, `escala` (`unidade`, `mil`, `milhoes` ou `bilhoes`), `natureza` (`observado`, `orientacao`, `premissa` ou `calculado`) e, opcionalmente, `tipo` (`preco`, `demonstracao`, `taxa`, `quantidade` ou `outro`). `scripts/entradas.py` rejeita campos ausentes ou inválidos e alerta sobre preço fora da data-base, demonstração em escala diferente, observação posterior à data-base e valor nulo; `--estrito` também falha com alertas. O script não confere se a fonte citada contém o valor. Diferenciar data de publicação, data do preço e período financeiro. Uma tabela extraída pode misturar moedas, escalas ou períodos; conferir seus cabeçalhos visualmente antes de modelar.
 
 Campos ausentes ficam indisponíveis. Distinguir ausência no pacote recebido de ausência no documento original. Um ponto sem data não deve entrar silenciosamente em um vetor anual. Usar campo separado, com ano nulo, e rotular qualquer comparação com cenário datado como condicional.
 
