@@ -20,6 +20,7 @@ $analise-investimentos-referenciada Analise o ativo solicitado na data-base indi
 
 - Roteiros para ações, bancos, seguradoras, concessões e fundos imobiliários.
 - Helpers de FCFF, DCF, terminal com RONIC, ponte por ação/cota, cap rate e métricas.
+- Verificação local da proveniência das entradas (`scripts/entradas.py`) e guia de fontes oficiais no SKILL.md.
 - Figuras PNG/SVG e exportação de Markdown simples para PDF.
 - Dados ausentes, cenários próprios e limites de reprodução explicitados.
 
@@ -36,6 +37,7 @@ python -m pip install -r scripts/requirements.txt
 mkdir -p output
 python scripts/acoes.py examples/fcff.json
 python scripts/calculos.py examples/dcf.json
+python scripts/entradas.py examples/entradas.json
 python scripts/graficos.py examples/chart.json output/receita
 ```
 
