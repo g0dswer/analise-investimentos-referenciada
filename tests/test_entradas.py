@@ -63,9 +63,31 @@ class EntradasTest(unittest.TestCase):
         dados['entradas'][1]['escala'] = 'mil'
         self.assertIn('escalas diferentes', entradas.verificar(dados)['alertas'][0])
 
-    def test_alerta_observacao_posterior_e_valor_nulo(self):
-        self.assertIn('posterior à data-base', com(i1={'data': '2026-07-01'})['alertas'][0])
-        self.assertEqual(com(i5={'data': '2026-07-01'})['alertas'], [])  # calculado
+    def test_alerta_publicacao_posterior_a_data_base(self):
+        # DFP de 2025 publicada em março de 2026 não existia em 31/01/2026.
+        dados = copy.deepcopy(EXEMPLO)
+        dados['data_base'] = '2026-01-31'
+        dados['entradas'] = [dados['entradas'][1]]
+        resultado = entradas.verificar(dados)
+        self.assertEqual(resultado['erros'], [])
+        self.assertIn('após a data-base', resultado['alertas'][0])
+
+    def test_orientacao_sobre_periodo_futuro_nao_alerta(self):
+        resultado = com(i1={'natureza': 'orientacao', 'data': '2027-12-31',
+                            'publicacao': '2026-05-15'})
+        self.assertEqual(resultado, dict(erros=[], alertas=[]))
+
+    def test_publicacao_exigida_para_observado_e_orientacao(self):
+        self.assertIn('exige publicacao', com(i1={'publicacao': ...})['erros'][0])
+        self.assertIn('exige publicacao',
+                      com(i1={'natureza': 'orientacao', 'publicacao': ...})['erros'][0])
+        self.assertTrue(com(i1={'publicacao': '27/03/2026'})['erros'])
+        self.assertEqual(com(i4={'data': '2026-07-01'})['erros'], [])  # premissa
+
+    def test_observado_nao_publicado_antes_da_data(self):
+        self.assertIn('antes da data observada', com(i1={'publicacao': '2025-11-30'})['erros'][0])
+
+    def test_alerta_valor_nulo(self):
         self.assertIn('não substituir por zero', com(i4={'valor': None})['alertas'][0])
 
     def test_codigos_de_saida(self):
